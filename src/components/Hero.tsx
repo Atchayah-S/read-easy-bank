@@ -31,6 +31,12 @@ const Hero: React.FC = () => {
                 variant="outline"
                 className="border-bookbank-primary text-bookbank-primary hover:bg-bookbank-primary/10 px-8 py-6 rounded-md flex items-center space-x-2 w-full sm:w-auto"
                 size="lg"
+                onClick={(e) => {
+                  e.preventDefault();
+                  // Open the auth modal with register tab active
+                  // This would be handled through a global state or context in a real app
+                  document.dispatchEvent(new CustomEvent('openAuthModal', { detail: { activeTab: 'register' } }));
+                }}
               >
                 <Book className="h-5 w-5 mr-2" />
                 Register Now

@@ -8,6 +8,109 @@ import AuthModal from '@/components/AuthModal';
 import { Separator } from '@/components/ui/separator';
 import { Book } from '@/types';
 
+// Sample data for books
+const recentlyAddedBooks: Book[] = [
+  {
+    id: '1',
+    title: 'Introduction to Computer Science',
+    author: 'John Smith',
+    coverImage: 'https://images.unsplash.com/photo-1581291518633-83b4ebd1d83e?auto=format&fit=crop&q=80&w=500',
+    description: 'A comprehensive introduction to the field of computer science, covering fundamental concepts and principles.',
+    genre: ['Computer Science', 'Education'],
+    publishedYear: 2022,
+    available: true,
+    totalCopies: 10,
+    availableCopies: 5
+  },
+  {
+    id: '2',
+    title: 'Engineering Mathematics',
+    author: 'Sarah Johnson',
+    coverImage: 'https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?auto=format&fit=crop&q=80&w=500',
+    description: 'This book covers essential mathematical concepts for engineering students.',
+    genre: ['Mathematics', 'Engineering'],
+    publishedYear: 2020,
+    available: false,
+    totalCopies: 8,
+    availableCopies: 0
+  },
+  {
+    id: '3',
+    title: 'Data Structures and Algorithms',
+    author: 'Michael Lee',
+    coverImage: 'https://images.unsplash.com/photo-1515879218367-8466d910aaa4?auto=format&fit=crop&q=80&w=500',
+    description: 'Learn about various data structures and algorithms essential for computer programming.',
+    genre: ['Computer Science', 'Programming'],
+    publishedYear: 2021,
+    available: true,
+    totalCopies: 12,
+    availableCopies: 3
+  },
+  {
+    id: '4',
+    title: 'Principles of Economics',
+    author: 'Emily Chen',
+    coverImage: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&q=80&w=500',
+    description: 'An introductory text on economic principles and theories.',
+    genre: ['Economics', 'Business'],
+    publishedYear: 2019,
+    available: true,
+    totalCopies: 15,
+    availableCopies: 7
+  }
+];
+
+const popularBooks: Book[] = [
+  {
+    id: '5',
+    title: 'Advanced Programming in Python',
+    author: 'David Wilson',
+    coverImage: 'https://images.unsplash.com/photo-1526379879527-8559ecfcaec0?auto=format&fit=crop&q=80&w=500',
+    description: 'A comprehensive guide to advanced programming techniques in Python.',
+    genre: ['Programming', 'Computer Science'],
+    publishedYear: 2021,
+    available: true,
+    totalCopies: 10,
+    availableCopies: 2
+  },
+  {
+    id: '6',
+    title: 'Fundamentals of Physics',
+    author: 'Robert Brown',
+    coverImage: 'https://images.unsplash.com/photo-1532012197267-da84d127e765?auto=format&fit=crop&q=80&w=500',
+    description: 'An essential textbook covering the fundamentals of physics for undergraduate students.',
+    genre: ['Physics', 'Science'],
+    publishedYear: 2018,
+    available: true,
+    totalCopies: 20,
+    availableCopies: 15
+  },
+  {
+    id: '7',
+    title: 'Introduction to Artificial Intelligence',
+    author: 'Jennifer Adams',
+    coverImage: 'https://images.unsplash.com/photo-1620712943543-bcc4688e7485?auto=format&fit=crop&q=80&w=500',
+    description: 'Learn the fundamentals of artificial intelligence and machine learning.',
+    genre: ['Computer Science', 'AI'],
+    publishedYear: 2023,
+    available: true,
+    totalCopies: 8,
+    availableCopies: 4
+  },
+  {
+    id: '8',
+    title: 'Organic Chemistry',
+    author: 'Thomas Lee',
+    coverImage: 'https://images.unsplash.com/photo-1532634993-15f421e42ec0?auto=format&fit=crop&q=80&w=500',
+    description: 'A comprehensive guide to understanding organic chemistry principles and reactions.',
+    genre: ['Chemistry', 'Science'],
+    publishedYear: 2020,
+    available: false,
+    totalCopies: 12,
+    availableCopies: 0
+  }
+];
+
 const Index = () => {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [searchResults, setSearchResults] = useState<Book[] | null>(null);
@@ -17,19 +120,26 @@ const Index = () => {
     // In a real app, this would call an API to search for books
     // For now, we'll just simulate a search result
     if (query) {
-      // Simulate search results
-      setSearchResults([
+      // Simulate search results by finding books that match the query
+      const allBooks = [...recentlyAddedBooks, ...popularBooks];
+      const results = allBooks.filter(book => 
+        book.title.toLowerCase().includes(query.toLowerCase()) || 
+        book.author.toLowerCase().includes(query.toLowerCase()) ||
+        book.genre.some(g => g.toLowerCase().includes(query.toLowerCase()))
+      );
+      
+      setSearchResults(results.length > 0 ? results : [
         {
-          id: '5',
-          title: `Search result for "${query}"`,
-          author: 'Various Authors',
+          id: 'search-1',
+          title: `No exact matches for "${query}"`,
+          author: 'Try different keywords',
           coverImage: 'https://images.unsplash.com/photo-1532012197267-da84d127e765?auto=format&fit=crop&q=80&w=500',
-          description: 'This is a sample search result.',
-          genre: ['Education'],
-          publishedYear: 2023,
-          available: true,
-          totalCopies: 5,
-          availableCopies: 2
+          description: 'We could not find any books matching your search criteria.',
+          genre: ['Search'],
+          publishedYear: new Date().getFullYear(),
+          available: false,
+          totalCopies: 0,
+          availableCopies: 0
         }
       ]);
     } else {
@@ -55,21 +165,18 @@ const Index = () => {
             <h2 className="text-3xl font-serif font-bold mb-8">Search Results</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {searchResults.map((book) => (
-                <div key={book.id} className="bg-white p-4 rounded shadow">
-                  <h3>{book.title}</h3>
-                  <p>{book.author}</p>
-                </div>
+                <BookCard key={book.id} book={book} />
               ))}
             </div>
           </div>
         </section>
       ) : (
         <>
-          <FeaturedBooks title="Recently Added Books" />
+          <FeaturedBooks title="Recently Added Books" books={recentlyAddedBooks} />
           
           <Separator className="my-4" />
           
-          <FeaturedBooks title="Most Popular Books" />
+          <FeaturedBooks title="Most Popular Books" books={popularBooks} />
         </>
       )}
       

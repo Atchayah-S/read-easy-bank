@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Book, Menu, User, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -11,6 +11,7 @@ interface NavbarProps {
 const Navbar: React.FC<NavbarProps> = ({ onOpenAuthModal }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const navigate = useNavigate();
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);

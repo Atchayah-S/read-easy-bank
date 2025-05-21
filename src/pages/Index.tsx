@@ -1,15 +1,15 @@
-
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
+import { Button } from '@/components/ui/button';
 import Hero from '@/components/Hero';
-import SearchBar from '@/components/SearchBar';
 import FeaturedBooks from '@/components/FeaturedBooks';
 import AuthModal from '@/components/AuthModal';
-import { Separator } from '@/components/ui/separator';
 import { Book } from '@/types';
+import BookCard from '@/components/BookCard';
 
-// Sample data for books
-const recentlyAddedBooks: Book[] = [
+// Sample data for featured books
+const featuredBooks: Book[] = [
   {
     id: '1',
     title: 'Introduction to Computer Science',
@@ -60,7 +60,8 @@ const recentlyAddedBooks: Book[] = [
   }
 ];
 
-const popularBooks: Book[] = [
+// Sample data for new arrivals
+const newArrivals: Book[] = [
   {
     id: '5',
     title: 'Advanced Programming in Python',
@@ -111,119 +112,152 @@ const popularBooks: Book[] = [
   }
 ];
 
+// Sample data for popular books
+const popularBooks: Book[] = [
+  {
+    id: '9',
+    title: 'Calculus: Early Transcendentals',
+    author: 'James Stewart',
+    coverImage: 'https://images.unsplash.com/photo-1509228468518-180dd4864904?auto=format&fit=crop&q=80&w=500',
+    description: 'A comprehensive guide to calculus covering limits, derivatives, integrals, and more.',
+    genre: ['Mathematics', 'Education'],
+    publishedYear: 2019,
+    available: true,
+    totalCopies: 25,
+    availableCopies: 10
+  },
+  {
+    id: '10',
+    title: 'Digital Marketing Strategies',
+    author: 'Lisa Wong',
+    coverImage: 'https://images.unsplash.com/photo-1563986768494-4dee2763ff3f?auto=format&fit=crop&q=80&w=500',
+    description: 'Learn modern digital marketing techniques and strategies for business growth.',
+    genre: ['Marketing', 'Business'],
+    publishedYear: 2022,
+    available: true,
+    totalCopies: 15,
+    availableCopies: 8
+  },
+  {
+    id: '11',
+    title: 'Human Anatomy and Physiology',
+    author: 'Elizabeth Harris',
+    coverImage: 'https://images.unsplash.com/photo-1530497610245-94d3c16cda28?auto=format&fit=crop&q=80&w=500',
+    description: 'A detailed exploration of human anatomy and physiological systems.',
+    genre: ['Biology', 'Medicine'],
+    publishedYear: 2020,
+    available: true,
+    totalCopies: 18,
+    availableCopies: 5
+  },
+  {
+    id: '12',
+    title: 'Introduction to Psychology',
+    author: 'Mark Thompson',
+    coverImage: 'https://images.unsplash.com/photo-1576094502599-6763da102ea7?auto=format&fit=crop&q=80&w=500',
+    description: 'A comprehensive introduction to the principles of psychology and human behavior.',
+    genre: ['Psychology', 'Social Science'],
+    publishedYear: 2021,
+    available: true,
+    totalCopies: 20,
+    availableCopies: 12
+  }
+];
+
 const Index = () => {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [searchResults, setSearchResults] = useState<Book[] | null>(null);
-
-  const handleSearch = (query: string) => {
-    console.log('Searching for:', query);
-    // In a real app, this would call an API to search for books
-    // For now, we'll just simulate a search result
-    if (query) {
-      // Simulate search results by finding books that match the query
-      const allBooks = [...recentlyAddedBooks, ...popularBooks];
-      const results = allBooks.filter(book => 
-        book.title.toLowerCase().includes(query.toLowerCase()) || 
-        book.author.toLowerCase().includes(query.toLowerCase()) ||
-        book.genre.some(g => g.toLowerCase().includes(query.toLowerCase()))
-      );
-      
-      setSearchResults(results.length > 0 ? results : [
-        {
-          id: 'search-1',
-          title: `No exact matches for "${query}"`,
-          author: 'Try different keywords',
-          coverImage: 'https://images.unsplash.com/photo-1532012197267-da84d127e765?auto=format&fit=crop&q=80&w=500',
-          description: 'We could not find any books matching your search criteria.',
-          genre: ['Search'],
-          publishedYear: new Date().getFullYear(),
-          available: false,
-          totalCopies: 0,
-          availableCopies: 0
-        }
-      ]);
-    } else {
-      setSearchResults(null);
-    }
-  };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen">
       <Navbar onOpenAuthModal={() => setIsAuthModalOpen(true)} />
       
       <Hero />
       
-      <div className="bg-white py-10">
-        <div className="container mx-auto px-4">
-          <SearchBar onSearch={handleSearch} />
-        </div>
-      </div>
+      <FeaturedBooks title="Featured Books" books={featuredBooks} />
       
-      {searchResults ? (
-        <section className="section-padding">
-          <div className="container mx-auto">
-            <h2 className="text-3xl font-serif font-bold mb-8">Search Results</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {searchResults.map((book) => (
-                <BookCard key={book.id} book={book} />
-              ))}
-            </div>
+      <section className="section-padding bg-white">
+        <div className="container mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-serif font-bold mb-4">How Our Book Bank Works</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Access thousands of textbooks through our automated system.
+              Borrowing and returning has never been easier.
+            </p>
           </div>
-        </section>
-      ) : (
-        <>
-          <FeaturedBooks title="Recently Added Books" books={recentlyAddedBooks} />
           
-          <Separator className="my-4" />
-          
-          <FeaturedBooks title="Most Popular Books" books={popularBooks} />
-        </>
-      )}
-      
-      <footer className="bg-gray-100 py-10 mt-auto">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div>
-              <h3 className="font-serif font-bold text-lg mb-4">ReadEasyBank</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="text-center p-6 rounded-lg border border-muted hover:border-bookbank-primary/50 hover:shadow-md transition-all">
+              <div className="bg-bookbank-primary/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-2xl font-bold text-bookbank-primary">1</span>
+              </div>
+              <h3 className="text-xl font-medium mb-2">Register</h3>
               <p className="text-muted-foreground">
-                Your university's digital book repository for easy access to all your educational resources.
+                Create an account with your student credentials to access our collection.
               </p>
             </div>
-            <div>
-              <h3 className="font-bold text-lg mb-4">Quick Links</h3>
-              <ul className="space-y-2">
-                <li><a href="#" className="nav-link">Home</a></li>
-                <li><a href="#" className="nav-link">Browse Books</a></li>
-                <li><a href="#" className="nav-link">My Account</a></li>
-                <li><a href="#" className="nav-link">Help & FAQ</a></li>
-              </ul>
+            
+            <div className="text-center p-6 rounded-lg border border-muted hover:border-bookbank-primary/50 hover:shadow-md transition-all">
+              <div className="bg-bookbank-primary/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-2xl font-bold text-bookbank-primary">2</span>
+              </div>
+              <h3 className="text-xl font-medium mb-2">Browse & Reserve</h3>
+              <p className="text-muted-foreground">
+                Search our collection and reserve the books you need for your courses.
+              </p>
             </div>
-            <div>
-              <h3 className="font-bold text-lg mb-4">Resources</h3>
-              <ul className="space-y-2">
-                <li><a href="#" className="nav-link">Book Request Form</a></li>
-                <li><a href="#" className="nav-link">Reading Recommendations</a></li>
-                <li><a href="#" className="nav-link">Study Materials</a></li>
-                <li><a href="#" className="nav-link">Research Guides</a></li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="font-bold text-lg mb-4">Contact Us</h3>
-              <address className="not-italic text-muted-foreground">
-                University Library Building<br />
-                123 Campus Drive<br />
-                University City, State 12345<br />
-                <a href="mailto:bookbank@university.edu" className="text-bookbank-primary">
-                  bookbank@university.edu
-                </a>
-              </address>
+            
+            <div className="text-center p-6 rounded-lg border border-muted hover:border-bookbank-primary/50 hover:shadow-md transition-all">
+              <div className="bg-bookbank-primary/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-2xl font-bold text-bookbank-primary">3</span>
+              </div>
+              <h3 className="text-xl font-medium mb-2">Borrow & Return</h3>
+              <p className="text-muted-foreground">
+                Pick up your books and return them when you're done. Automatic reminders included!
+              </p>
             </div>
           </div>
-          <div className="mt-10 pt-6 border-t border-gray-200 text-center text-sm text-muted-foreground">
-            <p>&copy; {new Date().getFullYear()} ReadEasyBank. All rights reserved.</p>
+          
+          <div className="flex justify-center mt-10">
+            <Link to="/books">
+              <Button className="bg-bookbank-primary hover:bg-bookbank-primary/90">
+                Start Browsing
+              </Button>
+            </Link>
           </div>
         </div>
-      </footer>
+      </section>
+      
+      <FeaturedBooks title="New Arrivals" books={newArrivals} />
+      
+      <section className="section-padding bg-bookbank-accent/5">
+        <div className="container mx-auto">
+          <div className="bg-white p-8 rounded-lg shadow-sm max-w-4xl mx-auto">
+            <div className="flex flex-col md:flex-row items-center">
+              <div className="md:w-1/2 mb-6 md:mb-0">
+                <h2 className="text-3xl font-serif font-bold mb-4">Join Our Book Bank Today</h2>
+                <p className="text-muted-foreground mb-6">
+                  Get access to thousands of textbooks and resources at a fraction of the cost. Join hundreds of students already saving money with our book bank system.
+                </p>
+                <Button 
+                  className="bg-bookbank-primary hover:bg-bookbank-primary/90"
+                  onClick={() => setIsAuthModalOpen(true)}
+                >
+                  Register Now
+                </Button>
+              </div>
+              <div className="md:w-1/2 md:pl-8">
+                <img 
+                  src="https://images.unsplash.com/photo-1481627834876-b7833e8f5570?auto=format&fit=crop&q=80&w=500" 
+                  alt="Students studying with books" 
+                  className="rounded-lg shadow-md w-full"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      <FeaturedBooks title="Popular Books" books={popularBooks} />
       
       <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
     </div>

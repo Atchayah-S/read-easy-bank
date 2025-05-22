@@ -9,7 +9,148 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      books: {
+        Row: {
+          author: string
+          available_copies: number
+          cover_image: string | null
+          created_at: string
+          description: string | null
+          genre: string[]
+          id: string
+          published_year: number | null
+          title: string
+          total_copies: number
+        }
+        Insert: {
+          author: string
+          available_copies?: number
+          cover_image?: string | null
+          created_at?: string
+          description?: string | null
+          genre?: string[]
+          id?: string
+          published_year?: number | null
+          title: string
+          total_copies?: number
+        }
+        Update: {
+          author?: string
+          available_copies?: number
+          cover_image?: string | null
+          created_at?: string
+          description?: string | null
+          genre?: string[]
+          id?: string
+          published_year?: number | null
+          title?: string
+          total_copies?: number
+        }
+        Relationships: []
+      }
+      borrow_history: {
+        Row: {
+          book_id: string
+          created_at: string
+          due_date: string
+          id: string
+          issue_date: string
+          return_date: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          book_id: string
+          created_at?: string
+          due_date: string
+          id?: string
+          issue_date?: string
+          return_date?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          book_id?: string
+          created_at?: string
+          due_date?: string
+          id?: string
+          issue_date?: string
+          return_date?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "borrow_history_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "books"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar: string | null
+          created_at: string
+          email: string | null
+          id: string
+          name: string | null
+          role: string
+        }
+        Insert: {
+          avatar?: string | null
+          created_at?: string
+          email?: string | null
+          id: string
+          name?: string | null
+          role?: string
+        }
+        Update: {
+          avatar?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string | null
+          role?: string
+        }
+        Relationships: []
+      }
+      reservations: {
+        Row: {
+          book_id: string
+          created_at: string
+          id: string
+          reservation_date: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          book_id: string
+          created_at?: string
+          id?: string
+          reservation_date?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          book_id?: string
+          created_at?: string
+          id?: string
+          reservation_date?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reservations_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "books"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

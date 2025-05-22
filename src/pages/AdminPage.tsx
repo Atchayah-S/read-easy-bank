@@ -1,11 +1,11 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus, Pencil, Trash2, Search, Filter } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Filter, UserCog } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -31,49 +31,19 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
 import { Book } from '@/types';
 import AuthModal from '@/components/AuthModal';
-
-// Sample book data (this would come from a database in a real app)
-const initialBooks: Book[] = [
-  {
-    id: '1',
-    title: 'Introduction to Computer Science',
-    author: 'John Smith',
-    coverImage: 'https://images.unsplash.com/photo-1581291518633-83b4ebd1d83e?auto=format&fit=crop&q=80&w=500',
-    description: 'A comprehensive introduction to the field of computer science, covering fundamental concepts and principles.',
-    genre: ['Computer Science', 'Education'],
-    publishedYear: 2022,
-    available: true,
-    totalCopies: 10,
-    availableCopies: 5
-  },
-  {
-    id: '2',
-    title: 'Engineering Mathematics',
-    author: 'Sarah Johnson',
-    coverImage: 'https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?auto=format&fit=crop&q=80&w=500',
-    description: 'This book covers essential mathematical concepts for engineering students.',
-    genre: ['Mathematics', 'Engineering'],
-    publishedYear: 2020,
-    available: false,
-    totalCopies: 8,
-    availableCopies: 0
-  },
-  {
-    id: '3',
-    title: 'Data Structures and Algorithms',
-    author: 'Michael Lee',
-    coverImage: 'https://images.unsplash.com/photo-1515879218367-8466d910aaa4?auto=format&fit=crop&q=80&w=500',
-    description: 'Learn about various data structures and algorithms essential for computer programming.',
-    genre: ['Computer Science', 'Programming'],
-    publishedYear: 2021,
-    available: true,
-    totalCopies: 12,
-    availableCopies: 3
-  },
-];
+import { supabase } from '@/integrations/supabase/client';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { fetchUsers, updateUserRole, UserProfile } from '@/services/userService';
 
 // Available genres for the select input
 const availableGenres = [
@@ -90,13 +60,18 @@ const availableGenres = [
 ];
 
 const AdminPage: React.FC = () => {
-  const [books, setBooks] = useState<Book[]>(initialBooks);
+  const [books, setBooks] = useState<Book[]>([]);
   const [isAddBookOpen, setIsAddBookOpen] = useState(false);
   const [isEditBookOpen, setIsEditBookOpen] = useState(false);
   const [isDeleteBookOpen, setIsDeleteBookOpen] = useState(false);
   const [currentBook, setCurrentBook] = useState<Book | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [userSearchTerm, setUserSearchTerm] = useState('');
+  const [isEditRoleOpen, setIsEditRoleOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
+  const [selectedRole, setSelectedRole] = useState<'student' | 'librarian'>('student');
+  const queryClient = useQueryClient();
   
   // Form state for adding/editing books
   const [formData, setFormData] = useState({
@@ -111,6 +86,36 @@ const AdminPage: React.FC = () => {
   });
 
   const { toast } = useToast();
+  
+  // Query for fetching books
+  const { data: booksData, isLoading: isLoadingBooks } = useQuery({
+    queryKey: ['books'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('books')
+        .select('*')
+        .order('title');
+      
+      if (error) {
+        throw error;
+      }
+      
+      return data as Book[];
+    }
+  });
+
+  // Query for fetching users
+  const { data: usersData, isLoading: isLoadingUsers } = useQuery({
+    queryKey: ['users'],
+    queryFn: fetchUsers
+  });
+
+  // Set books when data is loaded
+  useEffect(() => {
+    if (booksData) {
+      setBooks(booksData);
+    }
+  }, [booksData]);
 
   // Handle form input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -176,59 +181,132 @@ const AdminPage: React.FC = () => {
     setIsDeleteBookOpen(true);
   };
 
+  // Open edit role dialog
+  const openEditRoleDialog = (user: UserProfile) => {
+    setCurrentUser(user);
+    setSelectedRole(user.role);
+    setIsEditRoleOpen(true);
+  };
+
   // Add new book
-  const addBook = () => {
-    const newBook: Book = {
-      id: (books.length + 1).toString(),
-      ...formData,
-      available: formData.availableCopies > 0
-    };
-    
-    setBooks([...books, newBook]);
-    setIsAddBookOpen(false);
-    
-    toast({
-      title: "Book Added",
-      description: `"${newBook.title}" has been added to the library.`,
-    });
+  const addBook = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('books')
+        .insert({
+          title: formData.title,
+          author: formData.author,
+          cover_image: formData.coverImage,
+          description: formData.description,
+          genre: formData.genre,
+          published_year: formData.publishedYear,
+          total_copies: formData.totalCopies,
+          available_copies: formData.availableCopies,
+        })
+        .select();
+      
+      if (error) {
+        throw error;
+      }
+      
+      queryClient.invalidateQueries({ queryKey: ['books'] });
+      setIsAddBookOpen(false);
+      
+      toast({
+        title: "Book Added",
+        description: `"${formData.title}" has been added to the library.`,
+      });
+    } catch (error) {
+      console.error("Error adding book:", error);
+      toast({
+        title: "Error",
+        description: "Failed to add book. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   // Update book
-  const updateBook = () => {
+  const updateBook = async () => {
     if (!currentBook) return;
     
-    const updatedBooks = books.map(book => {
-      if (book.id === currentBook.id) {
-        return {
-          ...book,
-          ...formData,
-          available: formData.availableCopies > 0
-        };
+    try {
+      const { error } = await supabase
+        .from('books')
+        .update({
+          title: formData.title,
+          author: formData.author,
+          cover_image: formData.coverImage,
+          description: formData.description,
+          genre: formData.genre,
+          published_year: formData.publishedYear,
+          total_copies: formData.totalCopies,
+          available_copies: formData.availableCopies,
+        })
+        .eq('id', currentBook.id);
+      
+      if (error) {
+        throw error;
       }
-      return book;
-    });
-    
-    setBooks(updatedBooks);
-    setIsEditBookOpen(false);
-    
-    toast({
-      title: "Book Updated",
-      description: `"${formData.title}" has been updated.`,
-    });
+      
+      queryClient.invalidateQueries({ queryKey: ['books'] });
+      setIsEditBookOpen(false);
+      
+      toast({
+        title: "Book Updated",
+        description: `"${formData.title}" has been updated.`,
+      });
+    } catch (error) {
+      console.error("Error updating book:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update book. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   // Delete book
-  const deleteBook = () => {
+  const deleteBook = async () => {
     if (!currentBook) return;
     
-    const filteredBooks = books.filter(book => book.id !== currentBook.id);
-    setBooks(filteredBooks);
-    setIsDeleteBookOpen(false);
+    try {
+      const { error } = await supabase
+        .from('books')
+        .delete()
+        .eq('id', currentBook.id);
+      
+      if (error) {
+        throw error;
+      }
+      
+      queryClient.invalidateQueries({ queryKey: ['books'] });
+      setIsDeleteBookOpen(false);
+      
+      toast({
+        title: "Book Deleted",
+        description: `"${currentBook.title}" has been deleted.`,
+      });
+    } catch (error) {
+      console.error("Error deleting book:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete book. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Update user role
+  const handleUpdateUserRole = async () => {
+    if (!currentUser) return;
     
-    toast({
-      title: "Book Deleted",
-      description: `"${currentBook.title}" has been deleted.`,
-    });
+    const success = await updateUserRole(currentUser.id, selectedRole);
+    
+    if (success) {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      setIsEditRoleOpen(false);
+    }
   };
 
   // Filter books based on search term
@@ -237,6 +315,62 @@ const AdminPage: React.FC = () => {
     book.author.toLowerCase().includes(searchTerm.toLowerCase()) ||
     book.genre.some(g => g.toLowerCase().includes(searchTerm.toLowerCase()))
   );
+
+  // Filter users based on search term
+  const filteredUsers = usersData?.filter(user => 
+    (user.name?.toLowerCase().includes(userSearchTerm.toLowerCase()) ?? false) ||
+    (user.email?.toLowerCase().includes(userSearchTerm.toLowerCase()) ?? false) ||
+    user.role.toLowerCase().includes(userSearchTerm.toLowerCase())
+  ) ?? [];
+
+  // Check if the current user is authenticated and authorized
+  const [isAuthorized, setIsAuthorized] = useState(false);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        setIsAuthModalOpen(true);
+        return;
+      }
+
+      // Check if the user is a librarian
+      const { data } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', session.user.id)
+        .single();
+      
+      if (data?.role === 'librarian') {
+        setIsAuthorized(true);
+      } else {
+        toast({
+          title: "Access Denied",
+          description: "You need librarian privileges to access the admin panel.",
+          variant: "destructive",
+        });
+      }
+    };
+
+    checkAuth();
+  }, [toast]);
+
+  if (!isAuthorized && !isAuthModalOpen) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navbar onOpenAuthModal={() => setIsAuthModalOpen(true)} />
+        <div className="container mx-auto px-4 py-16 text-center">
+          <h1 className="text-3xl font-serif font-bold mb-4">Access Restricted</h1>
+          <p className="mb-6">You need librarian privileges to access the admin panel.</p>
+          <Button onClick={() => window.location.href = '/'}>
+            Return to Home
+          </Button>
+        </div>
+        <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -282,60 +416,66 @@ const AdminPage: React.FC = () => {
                 </div>
               </CardHeader>
               <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Title</TableHead>
-                      <TableHead>Author</TableHead>
-                      <TableHead>Year</TableHead>
-                      <TableHead>Total</TableHead>
-                      <TableHead>Available</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredBooks.length > 0 ? (
-                      filteredBooks.map((book) => (
-                        <TableRow key={book.id}>
-                          <TableCell className="font-medium">{book.title}</TableCell>
-                          <TableCell>{book.author}</TableCell>
-                          <TableCell>{book.publishedYear}</TableCell>
-                          <TableCell>{book.totalCopies}</TableCell>
-                          <TableCell>
-                            <span className={book.availableCopies > 0 ? "text-green-600" : "text-red-600"}>
-                              {book.availableCopies}
-                            </span>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex gap-2">
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
-                                onClick={() => openEditBookDialog(book)}
-                              >
-                                <Pencil className="h-4 w-4" />
-                              </Button>
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
-                                className="text-red-500 hover:text-red-700" 
-                                onClick={() => openDeleteBookDialog(book)}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
+                {isLoadingBooks ? (
+                  <div className="flex justify-center py-8">
+                    <p>Loading books...</p>
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Title</TableHead>
+                        <TableHead>Author</TableHead>
+                        <TableHead>Year</TableHead>
+                        <TableHead>Total</TableHead>
+                        <TableHead>Available</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredBooks.length > 0 ? (
+                        filteredBooks.map((book) => (
+                          <TableRow key={book.id}>
+                            <TableCell className="font-medium">{book.title}</TableCell>
+                            <TableCell>{book.author}</TableCell>
+                            <TableCell>{book.publishedYear}</TableCell>
+                            <TableCell>{book.totalCopies}</TableCell>
+                            <TableCell>
+                              <span className={book.availableCopies > 0 ? "text-green-600" : "text-red-600"}>
+                                {book.availableCopies}
+                              </span>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex gap-2">
+                                <Button 
+                                  variant="outline" 
+                                  size="sm" 
+                                  onClick={() => openEditBookDialog(book)}
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
+                                <Button 
+                                  variant="outline" 
+                                  size="sm" 
+                                  className="text-red-500 hover:text-red-700" 
+                                  onClick={() => openDeleteBookDialog(book)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={6} className="text-center py-4">
+                            No books found matching your search.
                           </TableCell>
                         </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={6} className="text-center py-4">
-                          No books found matching your search.
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
+                      )}
+                    </TableBody>
+                  </Table>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -344,12 +484,71 @@ const AdminPage: React.FC = () => {
             <Card>
               <CardHeader>
                 <CardTitle>Users Management</CardTitle>
-                <CardDescription>User management functionality will be implemented in the future.</CardDescription>
+                <CardDescription>Manage user accounts and permissions.</CardDescription>
+                
+                <div className="flex flex-col sm:flex-row gap-4 mt-4">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search users..."
+                      className="pl-8"
+                      value={userSearchTerm}
+                      onChange={(e) => setUserSearchTerm(e.target.value)}
+                    />
+                  </div>
+                </div>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center justify-center h-40 border border-dashed rounded-md">
-                  <p className="text-muted-foreground">User management features coming soon</p>
-                </div>
+                {isLoadingUsers ? (
+                  <div className="flex justify-center py-8">
+                    <p>Loading users...</p>
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Role</TableHead>
+                        <TableHead>Joined</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredUsers.length > 0 ? (
+                        filteredUsers.map((user) => (
+                          <TableRow key={user.id}>
+                            <TableCell className="font-medium">{user.name || 'N/A'}</TableCell>
+                            <TableCell>{user.email || 'N/A'}</TableCell>
+                            <TableCell>
+                              <span className={user.role === 'librarian' ? "text-blue-600" : ""}>
+                                {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                              </span>
+                            </TableCell>
+                            <TableCell>{new Date(user.created_at).toLocaleDateString()}</TableCell>
+                            <TableCell>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                className="flex items-center gap-1"
+                                onClick={() => openEditRoleDialog(user)}
+                              >
+                                <UserCog className="h-4 w-4" />
+                                <span className="hidden sm:inline">Change Role</span>
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={5} className="text-center py-4">
+                            No users found matching your search.
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -604,6 +803,42 @@ const AdminPage: React.FC = () => {
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsDeleteBookOpen(false)}>Cancel</Button>
             <Button variant="destructive" onClick={deleteBook}>Delete</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit User Role Dialog */}
+      <Dialog open={isEditRoleOpen} onOpenChange={setIsEditRoleOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Change User Role</DialogTitle>
+            <DialogDescription>
+              Update the role for {currentUser?.name || currentUser?.email || 'this user'}.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <div className="space-y-2">
+              <label htmlFor="role" className="text-sm font-medium">Role</label>
+              <Select
+                value={selectedRole}
+                onValueChange={(value: 'student' | 'librarian') => setSelectedRole(value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="student">Student</SelectItem>
+                  <SelectItem value="librarian">Librarian</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground mt-2">
+                Librarians have access to the admin panel and can manage books and users.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditRoleOpen(false)}>Cancel</Button>
+            <Button onClick={handleUpdateUserRole}>Update Role</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -44,6 +43,7 @@ import AuthModal from '@/components/AuthModal';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { fetchUsers, updateUserRole, UserProfile } from '@/services/userService';
+import { mapDatabaseBookToBook, mapBookToDatabaseBook } from '@/utils/dataMappers';
 
 // Available genres for the select input
 const availableGenres = [
@@ -100,7 +100,8 @@ const AdminPage: React.FC = () => {
         throw error;
       }
       
-      return data as Book[];
+      // Map database books to frontend Book type
+      return data.map(mapDatabaseBookToBook);
     }
   });
 
@@ -191,18 +192,11 @@ const AdminPage: React.FC = () => {
   // Add new book
   const addBook = async () => {
     try {
+      const dbBook = mapBookToDatabaseBook(formData);
+      
       const { data, error } = await supabase
         .from('books')
-        .insert({
-          title: formData.title,
-          author: formData.author,
-          cover_image: formData.coverImage,
-          description: formData.description,
-          genre: formData.genre,
-          published_year: formData.publishedYear,
-          total_copies: formData.totalCopies,
-          available_copies: formData.availableCopies,
-        })
+        .insert(dbBook)
         .select();
       
       if (error) {
@@ -231,18 +225,11 @@ const AdminPage: React.FC = () => {
     if (!currentBook) return;
     
     try {
+      const dbBook = mapBookToDatabaseBook(formData);
+      
       const { error } = await supabase
         .from('books')
-        .update({
-          title: formData.title,
-          author: formData.author,
-          cover_image: formData.coverImage,
-          description: formData.description,
-          genre: formData.genre,
-          published_year: formData.publishedYear,
-          total_copies: formData.totalCopies,
-          available_copies: formData.availableCopies,
-        })
+        .update(dbBook)
         .eq('id', currentBook.id);
       
       if (error) {

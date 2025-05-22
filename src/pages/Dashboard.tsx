@@ -1,19 +1,41 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Book, Calendar, CheckCheck, Clock, User } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import UserProfile from '@/components/UserProfile';
+import AuthModal from '@/components/AuthModal';
 
 const Dashboard = () => {
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const location = useLocation();
+  
+  useEffect(() => {
+    // Check if coming from login/register redirect
+    // In a real app, this would check for authentication tokens
+    if (location.state?.isLoggedIn) {
+      setIsLoggedIn(true);
+    } else {
+      // For demo purposes, we'll assume logged in
+      // In a real app, we would check authentication status here
+      setIsLoggedIn(true);
+    }
+  }, [location]);
+  
   // This would typically come from a user context or API
   const user = {
     name: "John Doe",
     email: "john.doe@example.com",
     role: "student",
-    id: "123"
+    id: "123",
+    joinDate: "2023-01-15",
+    booksRead: 12,
+    currentlyBorrowed: 2
   };
 
   // These would be loaded from an API in a real application
@@ -59,7 +81,7 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      <Navbar onOpenAuthModal={() => {}} />
+      <Navbar onOpenAuthModal={() => setIsAuthModalOpen(true)} />
       
       <div className="container mx-auto px-4 py-8">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8">
@@ -76,51 +98,57 @@ const Dashboard = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-lg">Borrowed Books</CardTitle>
-              <Book className="h-5 w-5 text-bookbank-primary" />
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold">{borrowedBooks.length}</p>
-            </CardContent>
-            <CardFooter>
-              <CardDescription>
-                You have {borrowedBooks.filter(book => book.status === "overdue").length} overdue books
-              </CardDescription>
-            </CardFooter>
-          </Card>
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
+          <div className="lg:col-span-1">
+            <UserProfile user={user} />
+          </div>
+          
+          <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="text-lg">Borrowed Books</CardTitle>
+                <Book className="h-5 w-5 text-bookbank-primary" />
+              </CardHeader>
+              <CardContent>
+                <p className="text-3xl font-bold">{borrowedBooks.length}</p>
+              </CardContent>
+              <CardFooter>
+                <CardDescription>
+                  You have {borrowedBooks.filter(book => book.status === "overdue").length} overdue books
+                </CardDescription>
+              </CardFooter>
+            </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-lg">Reserved Books</CardTitle>
-              <Calendar className="h-5 w-5 text-bookbank-secondary" />
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold">{reservedBooks.length}</p>
-            </CardContent>
-            <CardFooter>
-              <CardDescription>
-                You have {reservedBooks.filter(book => book.status === "pending").length} pending reservations
-              </CardDescription>
-            </CardFooter>
-          </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="text-lg">Reserved Books</CardTitle>
+                <Calendar className="h-5 w-5 text-bookbank-secondary" />
+              </CardHeader>
+              <CardContent>
+                <p className="text-3xl font-bold">{reservedBooks.length}</p>
+              </CardContent>
+              <CardFooter>
+                <CardDescription>
+                  You have {reservedBooks.filter(book => book.status === "pending").length} pending reservations
+                </CardDescription>
+              </CardFooter>
+            </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-lg">History</CardTitle>
-              <Clock className="h-5 w-5 text-bookbank-accent" />
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-bold">{history.length}</p>
-            </CardContent>
-            <CardFooter>
-              <CardDescription>
-                Total books you've read this semester
-              </CardDescription>
-            </CardFooter>
-          </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="text-lg">History</CardTitle>
+                <Clock className="h-5 w-5 text-bookbank-accent" />
+              </CardHeader>
+              <CardContent>
+                <p className="text-3xl font-bold">{history.length}</p>
+              </CardContent>
+              <CardFooter>
+                <CardDescription>
+                  Total books you've read this semester
+                </CardDescription>
+              </CardFooter>
+            </Card>
+          </div>
         </div>
 
         <Tabs defaultValue="borrowed" className="w-full">
@@ -262,6 +290,8 @@ const Dashboard = () => {
           </TabsContent>
         </Tabs>
       </div>
+      
+      <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
     </div>
   );
 };

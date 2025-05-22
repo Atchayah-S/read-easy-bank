@@ -1,8 +1,9 @@
 
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Book, Menu, User, X } from 'lucide-react';
+import { Book, Menu, User, X, BookOpen, LayoutDashboard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/components/ui/use-toast';
 
 interface NavbarProps {
   onOpenAuthModal: () => void;
@@ -11,7 +12,9 @@ interface NavbarProps {
 const Navbar: React.FC<NavbarProps> = ({ onOpenAuthModal }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userRole, setUserRole] = useState<'student' | 'librarian'>('student');
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -24,6 +27,16 @@ const Navbar: React.FC<NavbarProps> = ({ onOpenAuthModal }) => {
 
   const demoLogout = () => {
     setIsLoggedIn(false);
+    toast({
+      title: "Signed out",
+      description: "You have been signed out successfully."
+    });
+    navigate('/');
+  };
+
+  const toggleUserRole = () => {
+    // This is just for demo purposes
+    setUserRole(userRole === 'student' ? 'librarian' : 'student');
   };
 
   return (
@@ -38,6 +51,9 @@ const Navbar: React.FC<NavbarProps> = ({ onOpenAuthModal }) => {
         <div className="hidden md:flex items-center space-x-8">
           <Link to="/" className="nav-link font-medium">Home</Link>
           <Link to="/books" className="nav-link font-medium">Browse Books</Link>
+          {userRole === 'librarian' && isLoggedIn && (
+            <Link to="/admin" className="nav-link font-medium">Admin</Link>
+          )}
           <Link to="/about" className="nav-link font-medium">About Us</Link>
           <Link to="/contact" className="nav-link font-medium">Contact</Link>
         </div>
@@ -56,12 +72,16 @@ const Navbar: React.FC<NavbarProps> = ({ onOpenAuthModal }) => {
             <div className="flex items-center space-x-4">
               <Link to="/dashboard">
                 <Button variant="outline" className="flex items-center space-x-2">
-                  <User className="h-4 w-4" />
+                  <LayoutDashboard className="h-4 w-4" />
                   <span>Dashboard</span>
                 </Button>
               </Link>
               <Button variant="ghost" onClick={demoLogout}>
                 Sign Out
+              </Button>
+              {/* Demo toggle for development */}
+              <Button variant="ghost" size="sm" onClick={toggleUserRole} className="text-xs">
+                (Demo: {userRole})
               </Button>
             </div>
           )}
@@ -79,6 +99,9 @@ const Navbar: React.FC<NavbarProps> = ({ onOpenAuthModal }) => {
           <div className="container mx-auto px-4 py-3 flex flex-col space-y-3">
             <Link to="/" className="nav-link py-2" onClick={() => setIsMenuOpen(false)}>Home</Link>
             <Link to="/books" className="nav-link py-2" onClick={() => setIsMenuOpen(false)}>Browse Books</Link>
+            {userRole === 'librarian' && isLoggedIn && (
+              <Link to="/admin" className="nav-link py-2" onClick={() => setIsMenuOpen(false)}>Admin</Link>
+            )}
             <Link to="/about" className="nav-link py-2" onClick={() => setIsMenuOpen(false)}>About Us</Link>
             <Link to="/contact" className="nav-link py-2" onClick={() => setIsMenuOpen(false)}>Contact</Link>
             
@@ -98,7 +121,7 @@ const Navbar: React.FC<NavbarProps> = ({ onOpenAuthModal }) => {
                 <div className="flex flex-col space-y-2">
                   <Link to="/dashboard" onClick={() => setIsMenuOpen(false)}>
                     <Button variant="outline" className="w-full flex items-center justify-center space-x-2">
-                      <User className="h-4 w-4" />
+                      <LayoutDashboard className="h-4 w-4" />
                       <span>Dashboard</span>
                     </Button>
                   </Link>
@@ -111,6 +134,18 @@ const Navbar: React.FC<NavbarProps> = ({ onOpenAuthModal }) => {
                     }}
                   >
                     Sign Out
+                  </Button>
+                  {/* Demo toggle for development */}
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => {
+                      toggleUserRole();
+                      setIsMenuOpen(false);
+                    }} 
+                    className="text-xs"
+                  >
+                    (Demo: Switch to {userRole === 'student' ? 'Librarian' : 'Student'})
                   </Button>
                 </div>
               )}

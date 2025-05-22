@@ -27,15 +27,20 @@ export const mapDatabaseBookToBook = (
  */
 export const mapBookToDatabaseBook = (
   book: Partial<Book>
-): Partial<Database["public"]["Tables"]["books"]["Insert"]> => {
+): Database["public"]["Tables"]["books"]["Insert"] => {
+  // Make sure required fields are present
+  if (!book.title || !book.author) {
+    throw new Error("Book title and author are required");
+  }
+  
   return {
     title: book.title,
     author: book.author,
     cover_image: book.coverImage,
     description: book.description,
-    genre: book.genre,
+    genre: book.genre || [],
     published_year: book.publishedYear,
-    total_copies: book.totalCopies,
-    available_copies: book.availableCopies
+    total_copies: book.totalCopies || 1,
+    available_copies: book.availableCopies || book.totalCopies || 1
   };
 };

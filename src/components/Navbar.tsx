@@ -1,9 +1,11 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Book, Menu, User, X, BookOpen, LayoutDashboard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface NavbarProps {
   onOpenAuthModal: () => void;
@@ -12,31 +14,73 @@ interface NavbarProps {
 const Navbar: React.FC<NavbarProps> = ({ onOpenAuthModal }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userRole, setUserRole] = useState<'student' | 'librarian'>('student');
+  const [userRole, setUserRole] = useState<'student' | 'librarian' | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Check auth state on component mount
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session) {
+        setIsLoggedIn(true);
+        
+        // Get user role from profiles table
+        const { data } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', session.user.id)
+          .single();
+        
+        if (data) {
+          setUserRole(data.role as 'student' | 'librarian');
+        }
+      }
+    };
+
+    checkAuth();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        setIsLoggedIn(!!session);
+        
+        if (session) {
+          // Get user role from profiles table
+          const { data } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', session.user.id)
+            .single();
+          
+          if (data) {
+            setUserRole(data.role as 'student' | 'librarian');
+          }
+        } else {
+          setUserRole(null);
+        }
+      }
+    );
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
   };
 
-  // This would normally come from an auth context
-  const demoLogin = () => {
-    setIsLoggedIn(true);
-  };
-
-  const demoLogout = () => {
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
     setIsLoggedIn(false);
+    setUserRole(null);
     toast({
       title: "Signed out",
       description: "You have been signed out successfully."
     });
     navigate('/');
-  };
-
-  const toggleUserRole = () => {
-    // This is just for demo purposes
-    setUserRole(userRole === 'student' ? 'librarian' : 'student');
   };
 
   return (
@@ -76,13 +120,14 @@ const Navbar: React.FC<NavbarProps> = ({ onOpenAuthModal }) => {
                   <span>Dashboard</span>
                 </Button>
               </Link>
-              <Button variant="ghost" onClick={demoLogout}>
+              <Button variant="ghost" onClick={handleLogout}>
                 Sign Out
               </Button>
-              {/* Demo toggle for development */}
-              <Button variant="ghost" size="sm" onClick={toggleUserRole} className="text-xs">
-                (Demo: {userRole})
-              </Button>
+              {userRole && (
+                <span className="text-sm text-muted-foreground">
+                  ({userRole})
+                </span>
+              )}
             </div>
           )}
         </div>
@@ -129,24 +174,17 @@ const Navbar: React.FC<NavbarProps> = ({ onOpenAuthModal }) => {
                     variant="ghost" 
                     className="w-full" 
                     onClick={() => {
-                      demoLogout();
+                      handleLogout();
                       setIsMenuOpen(false);
                     }}
                   >
                     Sign Out
                   </Button>
-                  {/* Demo toggle for development */}
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    onClick={() => {
-                      toggleUserRole();
-                      setIsMenuOpen(false);
-                    }} 
-                    className="text-xs"
-                  >
-                    (Demo: Switch to {userRole === 'student' ? 'Librarian' : 'Student'})
-                  </Button>
+                  {userRole && (
+                    <div className="text-center text-sm text-muted-foreground">
+                      Role: {userRole.charAt(0).toUpperCase() + userRole.slice(1)}
+                    </div>
+                  )}
                 </div>
               )}
             </div>

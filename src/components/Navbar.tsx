@@ -94,8 +94,8 @@ const Navbar: React.FC<NavbarProps> = ({ onOpenAuthModal }) => {
         <div className="hidden md:flex items-center space-x-8">
           <Link to="/" className="nav-link font-medium">Home</Link>
           <Link to="/books" className="nav-link font-medium">Browse Books</Link>
-          {userRole === 'librarian' && isLoggedIn && (
-            <Link to="/admin" className="nav-link font-medium">Admin</Link>
+          {userRole === 'librarian' && (
+            <Link to="/admin" className="nav-link font-medium text-bookbank-primary">Admin</Link>
           )}
           <Link to="/about" className="nav-link font-medium">About Us</Link>
           <Link to="/contact" className="nav-link font-medium">Contact</Link>
@@ -143,8 +143,8 @@ const Navbar: React.FC<NavbarProps> = ({ onOpenAuthModal }) => {
           <div className="container mx-auto px-4 py-3 flex flex-col space-y-3">
             <Link to="/" className="nav-link py-2" onClick={() => setIsMenuOpen(false)}>Home</Link>
             <Link to="/books" className="nav-link py-2" onClick={() => setIsMenuOpen(false)}>Browse Books</Link>
-            {userRole === 'librarian' && isLoggedIn && (
-              <Link to="/admin" className="nav-link py-2" onClick={() => setIsMenuOpen(false)}>Admin</Link>
+            {userRole === 'librarian' && (
+              <Link to="/admin" className="nav-link py-2 text-bookbank-primary" onClick={() => setIsMenuOpen(false)}>Admin</Link>
             )}
             <Link to="/about" className="nav-link py-2" onClick={() => setIsMenuOpen(false)}>About Us</Link>
             <Link to="/contact" className="nav-link py-2" onClick={() => setIsMenuOpen(false)}>Contact</Link>

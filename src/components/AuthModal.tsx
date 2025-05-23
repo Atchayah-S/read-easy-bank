@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/components/ui/use-toast';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -28,7 +29,8 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     lastName: '', 
     email: '', 
     password: '', 
-    confirmPassword: '' 
+    confirmPassword: '',
+    role: 'student' as 'student' | 'librarian'
   });
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -43,13 +45,29 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     setRegisterForm(prev => ({ ...prev, [name]: value }));
   };
 
+  const handleRoleChange = (role: 'student' | 'librarian') => {
+    setRegisterForm(prev => ({ ...prev, role }));
+  };
+
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // In a real app, this would authenticate with a backend
-    // For now, we'll just simulate a successful login
-    
+    // Simulate login with mock data
     const isLibrarian = loginForm.email.includes('admin') || loginForm.email.includes('librarian');
+    
+    // Store user data in localStorage for persistence across the app
+    const userData = {
+      id: "user-" + Date.now(),
+      name: loginForm.email.split('@')[0],
+      email: loginForm.email,
+      role: isLibrarian ? 'librarian' : 'student',
+      avatar: null,
+      created_at: new Date().toISOString(),
+      booksRead: 5,
+      currentlyBorrowed: 2
+    };
+    
+    localStorage.setItem('currentUser', JSON.stringify(userData));
     
     toast({
       title: "Login Successful",
@@ -79,14 +97,33 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
       return;
     }
     
-    // In a real app, this would register with a backend
+    // Store user data in localStorage for persistence
+    const userData = {
+      id: "user-" + Date.now(),
+      name: `${registerForm.firstName} ${registerForm.lastName}`,
+      email: registerForm.email,
+      role: registerForm.role,
+      avatar: null,
+      created_at: new Date().toISOString(),
+      booksRead: 0,
+      currentlyBorrowed: 0
+    };
+    
+    localStorage.setItem('currentUser', JSON.stringify(userData));
+    
     toast({
       title: "Registration Successful",
       description: "Your account has been created. Welcome to ReadEasyBank!",
     });
     
     onClose();
-    navigate('/dashboard');
+    
+    // Navigate based on role
+    if (registerForm.role === 'librarian') {
+      navigate('/admin');
+    } else {
+      navigate('/dashboard');
+    }
   };
 
   return (
@@ -208,6 +245,24 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                   onChange={handleRegisterFormChange}
                   required 
                 />
+              </div>
+              <div className="space-y-2">
+                <Label>User Role</Label>
+                <RadioGroup 
+                  defaultValue="student" 
+                  value={registerForm.role}
+                  onValueChange={(value) => handleRoleChange(value as 'student' | 'librarian')}
+                  className="flex space-x-4"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="student" id="student" />
+                    <Label htmlFor="student">Student</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="librarian" id="librarian" />
+                    <Label htmlFor="librarian">Librarian</Label>
+                  </div>
+                </RadioGroup>
               </div>
               <div className="flex items-center space-x-2">
                 <Checkbox id="terms" required />

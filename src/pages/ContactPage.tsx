@@ -1,166 +1,218 @@
 
 import React, { useState } from 'react';
 import Navbar from '@/components/Navbar';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import AuthModal from '@/components/AuthModal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Mail, Phone, MapPin, Send } from 'lucide-react';
+import { Form, FormField, FormItem, FormLabel, FormControl, FormDescription, FormMessage } from '@/components/ui/form';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Mail, Phone, MapPin, Clock } from 'lucide-react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
 import { toast } from 'sonner';
 
-const ContactPage: React.FC = () => {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    subject: '',
-    message: ''
+const formSchema = z.object({
+  name: z.string().min(2, { message: "Name must be at least 2 characters" }),
+  email: z.string().email({ message: "Please enter a valid email address" }),
+  subject: z.string().min(5, { message: "Subject must be at least 5 characters" }),
+  message: z.string().min(10, { message: "Message must be at least 10 characters" }),
+});
+
+type ContactFormValues = z.infer<typeof formSchema>;
+
+const ContactPage = () => {
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  
+  const form = useForm<ContactFormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      subject: "",
+      message: "",
+    },
   });
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    
-    // Simulate sending a message
-    setTimeout(() => {
-      toast.success("Your message has been sent successfully. We'll get back to you soon!");
-      setFormData({
-        name: '',
-        email: '',
-        subject: '',
-        message: ''
-      });
-      setIsSubmitting(false);
-    }, 1500);
-  };
+  function onSubmit(data: ContactFormValues) {
+    toast.success("Message sent successfully! We'll get back to you soon.");
+    form.reset();
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar onOpenAuthModal={() => {}} />
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      <Navbar onOpenAuthModal={() => setIsAuthModalOpen(true)} />
       
-      <div className="container mx-auto px-4 py-12">
+      <main className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-4xl font-serif font-bold mb-8 text-center">Contact Us</h1>
+          <h1 className="text-4xl font-serif font-bold mb-6">Contact Us</h1>
           
-          <div className="grid md:grid-cols-3 gap-8 mb-12">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Mail className="h-5 w-5 text-bookbank-primary" />
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg flex items-center">
+                  <Mail className="mr-2 h-5 w-5 text-bookbank-primary" />
                   Email
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <a href="mailto:info@readeasybank.com" className="text-bookbank-primary hover:underline">
-                  info@readeasybank.com
-                </a>
+                <p className="text-sm">info@readyeasybank.com</p>
+                <p className="text-sm">support@readyeasybank.com</p>
               </CardContent>
             </Card>
             
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Phone className="h-5 w-5 text-bookbank-primary" />
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg flex items-center">
+                  <Phone className="mr-2 h-5 w-5 text-bookbank-primary" />
                   Phone
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p>(555) 123-4567</p>
-                <p className="text-sm text-muted-foreground">Mon-Fri, 9am-5pm</p>
+                <p className="text-sm">Main: (555) 123-4567</p>
+                <p className="text-sm">Support: (555) 765-4321</p>
               </CardContent>
             </Card>
             
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <MapPin className="h-5 w-5 text-bookbank-primary" />
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg flex items-center">
+                  <MapPin className="mr-2 h-5 w-5 text-bookbank-primary" />
                   Address
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p>123 Library Lane</p>
-                <p>Bookville, BK 12345</p>
+                <p className="text-sm">123 Library Lane</p>
+                <p className="text-sm">Academic City, CA 90210</p>
               </CardContent>
             </Card>
           </div>
           
-          <Card>
-            <CardHeader>
-              <CardTitle>Send Us a Message</CardTitle>
-              <CardDescription>
-                Fill out the form below and we'll get back to you as soon as possible.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label htmlFor="name" className="text-sm font-medium">Name</label>
-                    <Input 
-                      id="name"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleChange}
-                      required
-                    />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="md:col-span-1">
+              <h2 className="text-2xl font-medium mb-4">Hours of Operation</h2>
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center">
+                        <Clock className="mr-2 h-4 w-4 text-bookbank-primary" />
+                        <span>Monday - Friday</span>
+                      </div>
+                      <span>8:00 AM - 8:00 PM</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center">
+                        <Clock className="mr-2 h-4 w-4 text-bookbank-primary" />
+                        <span>Saturday</span>
+                      </div>
+                      <span>9:00 AM - 5:00 PM</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center">
+                        <Clock className="mr-2 h-4 w-4 text-bookbank-primary" />
+                        <span>Sunday</span>
+                      </div>
+                      <span>11:00 AM - 4:00 PM</span>
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <label htmlFor="email" className="text-sm font-medium">Email</label>
-                    <Input 
-                      id="email"
-                      name="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={handleChange}
-                      required
-                    />
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <label htmlFor="subject" className="text-sm font-medium">Subject</label>
-                  <Input 
-                    id="subject"
-                    name="subject"
-                    value={formData.subject}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <label htmlFor="message" className="text-sm font-medium">Message</label>
-                  <Textarea 
-                    id="message"
-                    name="message"
-                    rows={5}
-                    value={formData.message}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-                
-                <Button 
-                  type="submit" 
-                  className="w-full md:w-auto bg-bookbank-primary hover:bg-bookbank-primary/90"
-                  disabled={isSubmitting}
-                >
-                  <Send className="h-4 w-4 mr-2" />
-                  {isSubmitting ? 'Sending...' : 'Send Message'}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
+                </CardContent>
+              </Card>
+              
+              <div className="mt-6">
+                <h3 className="text-xl font-medium mb-3">Get in Touch</h3>
+                <p className="text-muted-foreground">
+                  Have questions or feedback? We're here to help! Fill out the form 
+                  and our team will get back to you as soon as possible.
+                </p>
+              </div>
+            </div>
+            
+            <div className="md:col-span-2">
+              <h2 className="text-2xl font-medium mb-4">Send Us a Message</h2>
+              <Card>
+                <CardContent className="pt-6">
+                  <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="name"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Name</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Your name" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="email"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Email</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Your email" type="email" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      
+                      <FormField
+                        control={form.control}
+                        name="subject"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Subject</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Message subject" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="message"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Message</FormLabel>
+                            <FormControl>
+                              <Textarea 
+                                placeholder="Type your message here..." 
+                                className="min-h-[120px]" 
+                                {...field} 
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <Button 
+                        type="submit" 
+                        className="bg-bookbank-primary hover:bg-bookbank-primary/90"
+                      >
+                        Send Message
+                      </Button>
+                    </form>
+                  </Form>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
         </div>
-      </div>
+      </main>
+      
+      <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
     </div>
   );
 };

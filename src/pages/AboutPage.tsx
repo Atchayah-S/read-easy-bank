@@ -1,96 +1,99 @@
 
 import React from 'react';
+import { useState } from 'react';
 import Navbar from '@/components/Navbar';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Book, Users, Calendar, History, School } from 'lucide-react';
+import AuthModal from '@/components/AuthModal';
+import { Card, CardContent } from '@/components/ui/card';
+import { Book, Users, Building, Award } from 'lucide-react';
 
-const AboutPage: React.FC = () => {
+const AboutPage = () => {
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar onOpenAuthModal={() => {}} />
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      <Navbar onOpenAuthModal={() => setIsAuthModalOpen(true)} />
       
-      <div className="container mx-auto px-4 py-12">
+      <main className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-4xl font-serif font-bold mb-8 text-center">About ReadEasyBank</h1>
+          <h1 className="text-4xl font-serif font-bold mb-6">About ReadEasyBank</h1>
           
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Book className="h-5 w-5 text-bookbank-primary" />
-                Our Mission
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p>
-                ReadEasyBank is dedicated to making educational resources accessible to all students. 
-                Our library management system streamlines the process of borrowing and returning books, 
-                helping educational institutions manage their resources more efficiently.
-              </p>
-              <p>
-                We believe that access to knowledge should be simple, straightforward, and available 
-                to everyone who seeks it. Our platform is designed to remove barriers between students 
-                and the resources they need to succeed.
-              </p>
-            </CardContent>
-          </Card>
-          
-          <div className="grid md:grid-cols-2 gap-6 mb-12">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <History className="h-5 w-5 text-bookbank-primary" />
-                  Our History
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p>
-                  Founded in 2024, ReadEasyBank began as a project to modernize library systems 
-                  in educational institutions. We identified common pain points in traditional 
-                  library management and developed a solution that emphasizes user experience 
-                  and efficiency.
-                </p>
+          <div className="prose max-w-none mb-10">
+            <p className="text-lg mb-6">
+              ReadEasyBank is a modern library management system designed specifically for educational institutions. 
+              Our mission is to make books and educational resources accessible to students in an efficient and 
+              user-friendly manner.
+            </p>
+            
+            <Card className="mb-8">
+              <CardContent className="pt-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="flex flex-col items-center text-center p-4">
+                    <div className="w-16 h-16 rounded-full bg-bookbank-primary/10 flex items-center justify-center mb-4">
+                      <Book className="h-8 w-8 text-bookbank-primary" />
+                    </div>
+                    <h3 className="text-xl font-medium mb-2">Our Collection</h3>
+                    <p>
+                      We maintain a comprehensive collection of over 10,000 academic textbooks, reference materials, 
+                      and digital resources covering all fields of study.
+                    </p>
+                  </div>
+                  
+                  <div className="flex flex-col items-center text-center p-4">
+                    <div className="w-16 h-16 rounded-full bg-bookbank-secondary/10 flex items-center justify-center mb-4">
+                      <Users className="h-8 w-8 text-bookbank-secondary" />
+                    </div>
+                    <h3 className="text-xl font-medium mb-2">Our Community</h3>
+                    <p>
+                      We serve a vibrant community of students, faculty, and staff, facilitating knowledge sharing 
+                      and academic excellence through our resources.
+                    </p>
+                  </div>
+                </div>
               </CardContent>
             </Card>
             
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="h-5 w-5 text-bookbank-primary" />
-                  Our Team
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p>
-                  Our team consists of educators, librarians, and software developers who are 
-                  passionate about education and technology. We work closely with schools and 
-                  universities to ensure our platform meets the needs of all stakeholders.
-                </p>
-              </CardContent>
-            </Card>
+            <h2 className="text-2xl font-medium mb-4">Our History</h2>
+            <p className="mb-6">
+              ReadEasyBank was established in 2015 with the vision of transforming traditional library services 
+              into a modern, digital-first experience. What started as a small collection of digital resources 
+              has grown into a comprehensive library management system used by educational institutions across 
+              the country.
+            </p>
+            
+            <h2 className="text-2xl font-medium mb-4">Our Mission</h2>
+            <p className="mb-6">
+              Our mission is to bridge the gap between traditional library services and modern technology, 
+              making educational resources more accessible, manageable, and engaging for students and faculty alike.
+            </p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 my-10">
+              <div className="flex flex-col items-center p-6 bg-white rounded-lg shadow-sm">
+                <Building className="h-10 w-10 text-bookbank-primary mb-4" />
+                <h3 className="text-xl font-medium mb-2">Our Values</h3>
+                <ul className="list-disc pl-5 space-y-2">
+                  <li>Accessibility for all students</li>
+                  <li>Innovation in library services</li>
+                  <li>Excellence in educational support</li>
+                  <li>Community engagement and collaboration</li>
+                </ul>
+              </div>
+              
+              <div className="flex flex-col items-center p-6 bg-white rounded-lg shadow-sm">
+                <Award className="h-10 w-10 text-bookbank-secondary mb-4" />
+                <h3 className="text-xl font-medium mb-2">Awards & Recognition</h3>
+                <ul className="list-disc pl-5 space-y-2">
+                  <li>Best Library Management System 2022</li>
+                  <li>Educational Technology Innovation Award 2021</li>
+                  <li>Student Choice Award 2020</li>
+                  <li>Digital Transformation Excellence 2019</li>
+                </ul>
+              </div>
+            </div>
           </div>
-          
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <School className="h-5 w-5 text-bookbank-primary" />
-                Our Vision
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="mb-4">
-                We envision a future where every student has equal access to educational resources. 
-                ReadEasyBank is committed to continuous improvement, regularly updating our platform 
-                based on user feedback and technological advancements.
-              </p>
-              <p>
-                In the coming years, we plan to expand our services to include digital resource 
-                management, research assistance tools, and integration with educational platforms 
-                to create a comprehensive learning ecosystem.
-              </p>
-            </CardContent>
-          </Card>
         </div>
-      </div>
+      </main>
+      
+      <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
     </div>
   );
 };

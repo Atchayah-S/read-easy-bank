@@ -4,67 +4,52 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Book, Menu, User, X, BookOpen, LayoutDashboard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 interface NavbarProps {
   onOpenAuthModal: () => void;
 }
 
+interface UserData {
+  id: string;
+  name: string;
+  email: string;
+  role: 'student' | 'librarian';
+  avatar: string | null;
+}
+
 const Navbar: React.FC<NavbarProps> = ({ onOpenAuthModal }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userRole, setUserRole] = useState<'student' | 'librarian' | null>(null);
+  const [userName, setUserName] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Check auth state on component mount
+  // Check auth state on component mount and when localStorage changes
   useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+    const checkAuth = () => {
+      const userDataString = localStorage.getItem('currentUser');
       
-      if (session) {
+      if (userDataString) {
+        const userData = JSON.parse(userDataString) as UserData;
         setIsLoggedIn(true);
-        
-        // Get user role from profiles table
-        const { data } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', session.user.id)
-          .single();
-        
-        if (data) {
-          setUserRole(data.role as 'student' | 'librarian');
-        }
+        setUserRole(userData.role);
+        setUserName(userData.name);
+      } else {
+        setIsLoggedIn(false);
+        setUserRole(null);
+        setUserName(null);
       }
     };
 
     checkAuth();
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        setIsLoggedIn(!!session);
-        
-        if (session) {
-          // Get user role from profiles table
-          const { data } = await supabase
-            .from('profiles')
-            .select('role')
-            .eq('id', session.user.id)
-            .single();
-          
-          if (data) {
-            setUserRole(data.role as 'student' | 'librarian');
-          }
-        } else {
-          setUserRole(null);
-        }
-      }
-    );
-
+    
+    // Listen for storage events to update auth state
+    window.addEventListener('storage', checkAuth);
+    
     return () => {
-      subscription.unsubscribe();
+      window.removeEventListener('storage', checkAuth);
     };
   }, []);
 
@@ -72,10 +57,11 @@ const Navbar: React.FC<NavbarProps> = ({ onOpenAuthModal }) => {
     setIsMenuOpen(!isMenuOpen);
   };
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
+  const handleLogout = () => {
+    localStorage.removeItem('currentUser');
     setIsLoggedIn(false);
     setUserRole(null);
+    setUserName(null);
     toast({
       title: "Signed out",
       description: "You have been signed out successfully."
@@ -123,9 +109,9 @@ const Navbar: React.FC<NavbarProps> = ({ onOpenAuthModal }) => {
               <Button variant="ghost" onClick={handleLogout}>
                 Sign Out
               </Button>
-              {userRole && (
-                <span className="text-sm text-muted-foreground">
-                  ({userRole})
+              {userName && (
+                <span className="text-sm">
+                  Hello, {userName} ({userRole})
                 </span>
               )}
             </div>
@@ -180,9 +166,9 @@ const Navbar: React.FC<NavbarProps> = ({ onOpenAuthModal }) => {
                   >
                     Sign Out
                   </Button>
-                  {userRole && (
+                  {userName && (
                     <div className="text-center text-sm text-muted-foreground">
-                      Role: {userRole.charAt(0).toUpperCase() + userRole.slice(1)}
+                      Hello, {userName} ({userRole})
                     </div>
                   )}
                 </div>

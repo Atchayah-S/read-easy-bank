@@ -74,6 +74,9 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
       description: "Welcome back to ReadEasyBank!",
     });
     
+    // Dispatch an event to notify other components about the auth state change
+    window.dispatchEvent(new Event('auth-state-changed'));
+    
     onClose();
     
     // Navigate to the appropriate dashboard based on user role
@@ -115,6 +118,9 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
       title: "Registration Successful",
       description: "Your account has been created. Welcome to ReadEasyBank!",
     });
+    
+    // Dispatch an event to notify other components about the auth state change
+    window.dispatchEvent(new Event('auth-state-changed'));
     
     onClose();
     

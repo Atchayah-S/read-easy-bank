@@ -314,22 +314,20 @@ const AdminPage: React.FC = () => {
   const [isAuthorized, setIsAuthorized] = useState(false);
 
   useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        setIsAuthModalOpen(true);
-        return;
-      }
+    // Get the user data from localStorage
+    const userDataString = localStorage.getItem('currentUser');
+    
+    if (!userDataString) {
+      setIsAuthModalOpen(true);
+      return;
+    }
 
-      // Check if the user is a librarian
-      const { data } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', session.user.id)
-        .single();
+    try {
+      // Parse the user data
+      const userData = JSON.parse(userDataString);
       
-      if (data?.role === 'librarian') {
+      // Check if the user is a librarian
+      if (userData.role === 'librarian') {
         setIsAuthorized(true);
       } else {
         toast({
@@ -338,10 +336,11 @@ const AdminPage: React.FC = () => {
           variant: "destructive",
         });
       }
-    };
-
-    checkAuth();
-  }, [toast]);
+    } catch (error) {
+      console.error("Error parsing user data:", error);
+      setIsAuthModalOpen(true);
+    }
+  }, []);
 
   if (!isAuthorized && !isAuthModalOpen) {
     return (

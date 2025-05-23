@@ -32,10 +32,17 @@ const Navbar: React.FC<NavbarProps> = ({ onOpenAuthModal }) => {
       const userDataString = localStorage.getItem('currentUser');
       
       if (userDataString) {
-        const userData = JSON.parse(userDataString) as UserData;
-        setIsLoggedIn(true);
-        setUserRole(userData.role);
-        setUserName(userData.name);
+        try {
+          const userData = JSON.parse(userDataString) as UserData;
+          setIsLoggedIn(true);
+          setUserRole(userData.role);
+          setUserName(userData.name);
+        } catch (error) {
+          console.error("Error parsing user data:", error);
+          setIsLoggedIn(false);
+          setUserRole(null);
+          setUserName(null);
+        }
       } else {
         setIsLoggedIn(false);
         setUserRole(null);
@@ -47,9 +54,11 @@ const Navbar: React.FC<NavbarProps> = ({ onOpenAuthModal }) => {
     
     // Listen for storage events to update auth state
     window.addEventListener('storage', checkAuth);
+    window.addEventListener('auth-state-changed', checkAuth as EventListener);
     
     return () => {
       window.removeEventListener('storage', checkAuth);
+      window.removeEventListener('auth-state-changed', checkAuth as EventListener);
     };
   }, []);
 
@@ -66,6 +75,10 @@ const Navbar: React.FC<NavbarProps> = ({ onOpenAuthModal }) => {
       title: "Signed out",
       description: "You have been signed out successfully."
     });
+    
+    // Dispatch an event to notify other components about the auth state change
+    window.dispatchEvent(new Event('auth-state-changed'));
+    
     navigate('/');
   };
 
